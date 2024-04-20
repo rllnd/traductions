@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {Picker} from '@react-native-picker/picker';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; // Import for swap icon
+import { Picker } from '@react-native-picker/picker';
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Speech from 'expo-speech';
 
 const languages = [
   { code: 'fr', label: 'Français' },
@@ -24,15 +26,15 @@ const languages = [
   { code: 'pl', label: 'Polonais' },
   { code: 'th', label: 'Thaï' },
   { code: 'mg', label: 'Malagasy' }
-  
+
 ];
 
 const App = () => {
   const [textToTranslate, setTextToTranslate] = useState('');
   const [translatedText, setTranslatedText] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState('auto'); 
+  const [sourceLanguage, setSourceLanguage] = useState('auto');
   const [targetLanguage, setTargetLanguage] = useState('en');
- 
+
   const translateText = async () => {
     try {
       const response = await axios.post(
@@ -45,22 +47,24 @@ const App = () => {
         },
         {
           headers: {
-            'x-rapidapi-host':  'google-translator9.p.rapidapi.com',
-            'x-rapidapi-key': 'f28b55bb25msh23a503a34fc0f68p11c3b4jsnbc5bb8f6a1c5',
+            'x-rapidapi-host': 'google-translator9.p.rapidapi.com',
+            'x-rapidapi-key': '7c23b346ddmsh76506c00eddc42fp138275jsn32db6224dcbe',
             'content-type': 'application/json',
             'useQueryString': true
-          }
+          },
+          timeout: 50000
         }
       );
-   
-     
+
+
       if (response.data && response.data.data && response.data.data.translations) {
-       
+
         const translatedText = response.data.data.translations[0].translatedText;
-        
+
         setTranslatedText(translatedText);
+        saveTranslation(textToTranslate, translatedText);
       } else {
-        
+
         setTranslatedText('Traduction introuvable');
       }
     } catch (error) {
@@ -69,25 +73,69 @@ const App = () => {
     }
   };
   const clearText = () => {
-  
+
     setTextToTranslate('');
   };
+  const playText = (text, language) => {
+    Speech.speak(text, {
+      language: language,
+    });
+  };
+
+
   const swapLanguages = () => {
     const tempSourceLanguage = sourceLanguage;
     setSourceLanguage(targetLanguage);
     setTargetLanguage(tempSourceLanguage);
   };
+
   const playTranslatedText = () => {
-    // Implémentez ici la logique pour jouer le texte traduit, par exemple, via une synthèse vocale.
-    // Cette fonction sera appelée lorsque l'utilisateur cliquera sur l'icône de haut-parleur.
+    playText(translatedText, targetLanguage);
     console.log('Lecture du texte traduit...');
   };
   const handleTextChange = (text) => {
     setTextToTranslate(text);
-    playTranslatedText(text); // Lire le texte saisi
+    playTranslatedText(text); 
   };
+  const saveTranslation = async (originalText, translatedText) => {
+    try {
+      
+      const jsonValue = await AsyncStorage.getItem('@translations');
+      const existingTranslations = jsonValue ? JSON.parse(jsonValue) : [];
+
+      const newTranslation = {
+        original: originalText,
+        translated: translatedText,
+        date: new Date().toLocaleString(), 
+      };
+      existingTranslations.push(newTranslation);
+
+      await AsyncStorage.setItem('@translations', JSON.stringify(existingTranslations));
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement de la traduction :', error);
+    }
+  };
+  const deleteSpecificTranslation = async (identifier) => {
+    try {
+     
+      const jsonValue = await AsyncStorage.getItem('@translations');
+      const existingTranslations = jsonValue ? JSON.parse(jsonValue) : [];
+
+    
+      const updatedTranslations = existingTranslations.filter(
+        (translation) => translation.id !== identifier
+      );
+
+     
+      await AsyncStorage.setItem('@translations', JSON.stringify(updatedTranslations));
+      console.log('Traduction supprimée avec succès.');
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la traduction :', error);
+    }
+  };
+
   return (
-    <LinearGradient colors={['#b2d7e9','#cb9d72' ]} style={styles.container}>
+    <LinearGradient colors={['#b2d7e9', '#cb9d72']} style={styles.container}>
       <View style={styles.content}>
         <View style={styles.body}>
           <View style={styles.inputContainer}>
@@ -95,32 +143,30 @@ const App = () => {
               selectedValue={sourceLanguage}
               style={styles.picker}
               onValueChange={setSourceLanguage}
-            > 
-            
+            >
+
               <Picker.Item label="Auto" value="auto" />
-             
+
               {languages.map((language) => (
                 <Picker.Item key={language.code} label={language.label} value={language.code} />
               ))}
-        
-              </Picker>
-            
+
+            </Picker>
+
           </View>
           <View>
             <TextInput
-             
+
               style={styles.input}
               onChangeText={setTextToTranslate}
               value={textToTranslate}
               placeholder="  Entrez votre texte..."
-              
+
             />
-             <TouchableOpacity onPress={playTranslatedText.bind(null, translatedText)} style={styles.speakerIcon}>
-              <MaterialCommunityIcons name="volume-high" size={24} color="black" />
+            
+            <TouchableOpacity onPress={clearText} style={styles.clearIcon}>
+              <MaterialCommunityIcons name="close-circle" size={24} color="red" />
             </TouchableOpacity>
-              <TouchableOpacity onPress={clearText} style={styles.clearIcon}>
-          <MaterialCommunityIcons name="close-circle" size={24} color="red" />
-        </TouchableOpacity>
           </View>
           <View style={styles.footer}>
             <TouchableOpacity onPress={translateText}>
@@ -131,7 +177,7 @@ const App = () => {
             </TouchableOpacity>
           </View>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Picker
             selectedValue={targetLanguage}
@@ -145,16 +191,20 @@ const App = () => {
         </View>
         <View>
           <TextInput style={styles.input} value={translatedText} editable={false} />
+          <TouchableOpacity onPress={playTranslatedText.bind(null, translatedText)} style={styles.speakerIcon}>
+              <MaterialCommunityIcons name="volume-high" size={28} color="black" />
+            </TouchableOpacity>
         </View>
+       
       </View>
+     
     </LinearGradient>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
+
   },
   textInputContainer: {
     flexDirection: 'row',
@@ -166,36 +216,36 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inputContainer: {
-    fontsize:16,
+    fontsize: 16,
     alignItems: 'center',
     borderColor: 'gray',
     borderWidth: 1,
     width: 200,
     padding: 10,
-    left:40,
+    left: 40,
     borderRadius: 10,
     margin: 10,
   },
   speakerIcon: {
     position: 'absolute',
-    left:1,
-    bottom: -22, 
+    left: 1,
+    bottom: -22,
   },
-  picker:{
-    width:'100%',
-    height:50,
-      left:10,
+  picker: {
+    width: '100%',
+    height: 50,
+    left: 10,
   },
   input: {
     flex: 0,
     height: 80,
-    width:300,
+    width: 300,
     color: 'black',
     fontWeight: 'bold',
     fontSize: 18,
     borderWidth: 1,
     lineHeight: 90,
-    borderRadius:5
+    borderRadius: 5
   },
   translatedText: {
     fontSize: 20,
@@ -207,7 +257,7 @@ const styles = StyleSheet.create({
     top: 45,
   },
   translatedTextContainer: {
-    alignItems: 'center', // Center translated text
+    alignItems: 'center',
   },
   footer: {
     padding: 20,

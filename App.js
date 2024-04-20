@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StatusBar,Image, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StatusBar,Image, Switch} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
@@ -7,56 +7,41 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { s } from './style';
 import { t } from './text';
 import Traduction from './components/traduction';
-
-
+import SavedTranslations from './components/enregistrees';
+import help from './components/Aide';
+import Settings from './components/parametre';
 
 const CustomDrawerContent = (props) => {
-    // État pour le mode sombre ou clair
-    const [isDarkMode, setIsDarkMode] = useState(false);
-
-    // Fonction de gestion du changement de thème
-   const handleThemeChange = () => {
-    // Inverse l'état actuel de isDarkMode
-    setIsDarkMode((prevMode) => !prevMode);
-
-    // Appliquez les styles de thème appropriés à votre application
-    if (isDarkMode) {
-        // Mode sombre activé
-        // Changez les couleurs de l'interface pour le mode sombre (par exemple, arrière-plan noir, texte blanc)
-        applyDarkTheme();
-    } else {
-        // Mode sombre désactivé
-        // Changez les couleurs de l'interface pour le mode normal (par exemple, arrière-plan blanc, texte noir)
-        applyLightTheme();
-    }
-};
+        const [isDarkMode, setIsDarkMode] = useState(false);
+        const handleThemeChange = () => {
+         setIsDarkMode((prevMode) => !prevMode);
+        if (isDarkMode) {
+              applyDarkTheme();
+        } else {
+              applyLightTheme();
+              }
+}   ;
 
 const applyDarkTheme = () => {
-    
     setThemeColors({
         backgroundColor: 'black',
-        textColor: 'white',
-     
+        textColor: 'white', 
     });
 };
-
 const applyLightTheme = () => {
-
     setThemeColors({
         backgroundColor: 'white',
-        textColor: 'black',
-       
+        textColor: 'black',   
     });
 };
 
     return (
         <DrawerContentScrollView {...props}>
-           
              <DrawerItem
                 label="Traduction"
                 onPress={() => props.navigation.navigate('Traduction')}
                  labelStyle={{
-                fontWeight: 'bold', // Met le texte en gras
+                fontWeight: 'bold', 
                 fontSize: 18,
                 color: '#000', 
                  }}
@@ -66,33 +51,29 @@ const applyLightTheme = () => {
                 icon={() => <Icon name="home" size={24} />}
                 onPress={() => props.navigation.navigate('Home')}
                  labelStyle={{
-                fontWeight: 'bold', // Met le texte en gras
-                fontSize: 14, // Augmente la taille de la police
-                color: '#000', // Couleur du texte
+                fontWeight: 'bold', 
+                fontSize: 14, 
+                color: '#000',
                  }}
             />
           <DrawerItem
                 label="Traductions enregistrées"
                 icon={() => <Icon name="book" size={24} />}
-                onPress={() => props.navigation.navigate('enregistrees')}
+                onPress={() => props.navigation.navigate('SavedTranslations')}
                  labelStyle={{
-                fontWeight: 'bold', // Met le texte en gras
-                fontSize: 12, // Augmente la taille de la police
-                color: '#000', // Couleur du texte
+                fontWeight: 'bold',
+                fontSize: 12,
+                color: '#000',
                  }}
             />
-
-           
-
-            
             <DrawerItem
                 label="Paramètres"
                 icon={() => <Icon name="cog" size={24} />}
                 onPress={() => props.navigation.navigate('Settings')}
                  labelStyle={{
-                fontWeight: 'bold', // Met le texte en gras
-                fontSize: 14, // Augmente la taille de la police
-                color: '#000', // Couleur du texte
+                fontWeight: 'bold',
+                fontSize: 14,
+                color: '#000', 
                  }}
             />
            
@@ -106,12 +87,12 @@ const applyLightTheme = () => {
             </View>
              <DrawerItem
                 label="Aides et commentaires"
-                icon={() => <Icon name="help" size={24} color="#000" />}
-                onPress={() => props.navigation.navigate('Aides')}
+                icon={() => <Icon name="question-circle" size={24} color="#000" />}
+                onPress={() => props.navigation.navigate('help')}
                  labelStyle={{
-                fontWeight: 'bold', // Met le texte en gras
-                fontSize: 14, // Augmente la taille de la police
-                color: '#000', // Couleur du texte
+                fontWeight: 'bold',
+                fontSize: 14,
+                color: '#000', 
                  }}
             />
         </DrawerContentScrollView>
@@ -142,8 +123,10 @@ const MainApp = () => {
             <Drawer.Navigator initialRouteName="Home" drawerContent={CustomDrawerContent}>
                 <Drawer.Screen name="Home" component={App} />
                 <Drawer.Screen name="Traduction" component={Traduction} />
-              
-                {/* Ajoutez d'autres écrans ici si nécessaire */}
+                <Drawer.Screen name="SavedTranslations" component={SavedTranslations} />
+                <Drawer.Screen name="help" component={help} />
+                <Drawer.Screen name="Settings" component={Settings} />
+               
             </Drawer.Navigator>
         </NavigationContainer>
     );
